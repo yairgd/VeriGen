@@ -2,7 +2,7 @@ package VeriGen::Module
 use Verigen::OutPort
 use Verigen::InPort
 
-
+#http://perltricks.com/article/25/2013/5/20/Old-School-Object-Oriented-Perl/
 
 use strict;
 use warnings;
