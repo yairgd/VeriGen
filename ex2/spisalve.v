@@ -1,8 +1,8 @@
-module spislave (miso,mosi,cs_rise,cs_fall,spi_clk,clk,rst,cs_sync);
+module spislave (miso,mosi,cs,spi_clk,clk,rst);
 input mosi;
 output miso;
-input cs_rise,cs_fall;
 input spi_clk;
+input cs;
 input clk;
 input rst;
 
@@ -12,19 +12,24 @@ reg [6:0] ser2reg_cnt;
 
 reg [6:0] cnt;
 
-output reg cs_sync;
 
-initial cs_sync=1;
+reg [1:0] cs_d;
 always @(posedge clk)
-begin
-	if (cs_fall==1'b1) begin
-		cs_sync=1'b0;
-		cnt<=0;
-	end
-	if (cs_sync==1'b0 && cs_rise==1'b1) begin
-		cs_sync<=1'b1;	
-	end
+begin:cs_detect
+	cs_d <={cs_d[1],cs};
 end
+
+reg cs_sync;
+always @(cs_d)
+begin
+	case (cs_d)
+		2'b01: cs_sync=1'b1;
+		2'b10: cs_sync=1'b0;
+		default: cs_sync=cs_sync;
+	endcase
+end
+
+
 
 
 

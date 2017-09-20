@@ -21,6 +21,8 @@ begin
 	cnt = 0;
 	reset = 0; 
 	enable = 0;
+
+	#700
 	cs =1;
 
 	#5  rst = 0;
@@ -43,12 +45,11 @@ end
 assign mosi = data_out[23];
 
 
-wire cs_sync;
 
 
 always @(posedge clk)
 begin:mosi
-	if (cs_sync==1'b0  ) begin  
+	if (cs==1'b0  ) begin  
 		data_out[23:1]<={data_out[22:0], 1'b0};
 		cnt<=cnt+1;
 		if (cnt==35) begin
@@ -56,18 +57,14 @@ begin:mosi
 			#5000
 			$finish;
 		end
-//	end else begin
-	//	$finish;
 	end
 end
 
 
 
-wire cs_fall,cs_rise;
-edge_detect edd_cs ( .async_sig(cs), .clk(clk),.rise(cs_rise),.fall(cs_fall),.rst( 0) );
 
 
-spislave spislave_ins (.miso(),.mosi(data_out[23]),.cs_rise ( cs_rise  ), .cs_fall(cs_fall),.cs_sync(cs_sync), .spi_clk(spi_clk)  ,.clk(clk));
+spislave spislave_ins (.miso(),.mosi(data_out[23]), .cs(cs), .spi_clk(spi_clk)  ,.clk(clk));
 
 
 endmodule
