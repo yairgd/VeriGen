@@ -11,6 +11,9 @@ reg [7:0]cnt;
 
 time delay;
 
+
+localparam SPI_WORDLEN=24;
+
 initial 
 begin
 	$dumpfile("test.vcd");
@@ -42,7 +45,7 @@ begin
 	#10 clk = ~clk; 
 	#80 spi_clk = ~spi_clk;
 end
-assign mosi = data_out[23];
+assign mosi = data_out[SPI_WORDLEN-1];
 
 
 
@@ -50,9 +53,9 @@ assign mosi = data_out[23];
 always @(posedge clk)
 begin:mosi
 	if (cs==1'b0  ) begin  
-		data_out[23:1]<={data_out[22:0], 1'b0};
+		data_out <={data_out[SPI_WORDLEN-2:0], 1'b0};
 		cnt<=cnt+1;
-		if (cnt==35) begin
+		if (cnt==SPI_WORDLEN+2) begin
 			cs=1;
 			#5000
 			$finish;
@@ -64,7 +67,7 @@ end
 
 
 
-spislave spislave_ins (.miso(),.mosi(data_out[23]), .cs(cs), .spi_clk(spi_clk)  ,.clk(clk));
+spislave #(16) spislave_ins (.miso(),.mosi(data_out[SPI_WORDLEN-1]), .cs(cs), .spi_clk(spi_clk)  ,.clk(clk));
 
 
 endmodule
