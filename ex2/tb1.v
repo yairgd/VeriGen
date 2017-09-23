@@ -13,7 +13,7 @@ reg [7:0]cnt;
 time delay;
 
 
-localparam SPI_WORDLEN=16;
+localparam SPI_WORDLEN=32;
 localparam ADDR_WIDTH = 7;
 localparam DATA_WIDTH = 8;
 localparam SELECT_WIDTH = 1;
@@ -22,14 +22,10 @@ initial
 begin
 	$dumpfile("test.vcd");
 	$dumpvars(0,tb1);
-	data_out[15:8] = 8'b10000001;
-	data_out[7:0] = 8'hff;
+	data_out=0;
+	data_out[23:16] = 8'h56;
+	data_out[31:24] = 8'b10000010;
 
-	reset=0;
-	#5
-	reset=1;
-	#1500
-	reset=0;
 
 	clk = 0;
 	spi_clk = 0;
@@ -41,11 +37,20 @@ end
 
 
 reg [4:0] spi_cnt;
+reg rst_done;
 initial  spi_cnt =0;
+initial rst_done=0;
 always
 begin
 	#10 
 	clk = ~clk;
+	/* emulate sync reset with clk */
+	if (rst_done==0) begin
+		reset=1;
+		rst_done=1;
+	end else begin
+		reset=0;
+	end
 	#3
 	if (spi_cnt==8) begin
 		spi_clk=~spi_clk;
@@ -56,19 +61,19 @@ begin
 
 end
 
-assign mosi = data_out[SPI_WORDLEN-1];
+//assign mosi = data_out[SPI_WORDLEN-1:31];
 
 
 
 
 always @(posedge spi_clk or posedge reset)
-begin:mosi
+begin:mosi1
 	if (reset==1) begin
 		cs<=1;
 		cnt<=0;
 		#5000;
 	end else if (cnt<SPI_WORDLEN) begin
-		data_out <={data_out[SPI_WORDLEN-2:0] ,1'b0 };
+		{mosi ,data_out }<={data_out[SPI_WORDLEN-1:0] ,1'b0 };
 		cs<=1'b0;
 		cnt<=cnt+1;
 	end else begin
@@ -95,10 +100,18 @@ wire			 wbm_err_i;    // ERR_I error input
 wire			 wbm_rty_i;    // RTY_I retry input
 wire 			 wbm_cyc_o;    // CYC_O cycle output
 
-spislave #(16) spislave_ins (.miso(),.mosi(data_out[SPI_WORDLEN-1]), .cs(cs), .spi_clk(spi_clk)  ,.clk(clk),.rst(reset),
+reg mosi;
+spislave #() spislave_ins (
+	.miso(),.mosi(mosi), .cs(cs), .spi_clk(spi_clk)  ,.clk(clk),.rst(reset),
 	.wbm_adr_o(wbm_adr_o),.wbm_dat_i(wbm_dat_i),.wbm_dat_o(wbm_dat_o),.wbm_we_o(wbm_we_o),.wbm_sel_o(wbm_sel_o),
-	.wbm_ack_i(wbm_ack_i),.wbm_err_i(wbm_err_i),.wbm_rty_i(wbm_rty_i),.wbm_cyc_o(wbm_cyc_o) );
+	.wbm_ack_i(wbm_ack_i),.wbm_err_i(wbm_err_i),.wbm_rty_i(wbm_rty_i),.wbm_cyc_o(wbm_cyc_o),.wbm_stb_o ( wbm_stb_o) );
 
+
+
+
+version  #()   ver_inst (
+	.clk(clk),.rst(reset),.addrmask(4'b0000),.adr_i (wbm_adr_o), .dat_i (wbm_dat_o),.dat_o (wbm_dat_i),.sel_i(1'b0),
+	.we_i (wbm_we_o), .stb_i (wbm_stb_o), .ack_o (wbm_ack_i),.cyc_i (1'b0) ); 
 
 
 
