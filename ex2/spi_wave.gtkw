@@ -1,0 +1,44 @@
+[*]
+[*] GTKWave Analyzer v3.3.68 (w)1999-2016 BSI
+[*] Sat Sep 23 23:04:39 2017
+[*]
+[dumpfile] "/home/yair/perl_verilog/VeriGen/ex2/test.vcd"
+[dumpfile_mtime] "Sat Sep 23 23:00:54 2017"
+[dumpfile_size] 49125
+[savefile] "/home/yair/perl_verilog/VeriGen/ex2/spi_wave.gtkw"
+[timestart] 0
+[size] 1000 600
+[pos] -1 -1
+*-24.000000 4890 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb1.
+[sst_width] 213
+[signals_width] 275
+[sst_expanded] 1
+[sst_vpaned_height] 151
+@28
+tb1.clk
+tb1.spislave_ins.clk
+tb1.spislave_ins.spi_clk
+@22
+tb1.cnt[7:0]
+@28
+tb1.spislave_ins.cs
+tb1.spislave_ins.mosi
+@22
+tb1.spislave_ins.cmd[7:0]
+tb1.spislave_ins.cnt[6:0]
+@28
+tb1.spislave_ins.cs_d[1:0]
+@22
+tb1.spislave_ins.cmd[7:0]
+tb1.spislave_ins.cnt[6:0]
+@28
+tb1.spislave_ins.cs_sync
+tb1.spislave_ins.cmd[7:0]
+tb1.spislave_ins.cs_sync
+@29
+tb1.spislave_ins.miso
+@22
+tb1.ver_inst.r2[7:0]
+[pattern_trace] 1
+[pattern_trace] 0

@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-
+//iverilog tb1.v spisalve.v  version.v
 module tb1; 
 reg clk, spi_clk,reset, enable; 
 wire [3:0] count; 
@@ -24,7 +24,7 @@ begin
 	$dumpvars(0,tb1);
 	data_out=0;
 	data_out[23:16] = 8'h56;
-	data_out[31:24] = 8'b10000010;
+	data_out[31:24] = 8'b00000001;
 
 
 	clk = 0;
