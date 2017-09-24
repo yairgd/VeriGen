@@ -30,10 +30,12 @@ always @(posedge clk)
 begin:rw_regs
 	if (rst) begin
 		ack_o <=1'b0;
+		dat_o<=0;
+		r2<=8'h78;
 	end else if (stb_i  ) begin
 		ack_o<=1'b1;
 		if (!we_i) begin
-			case (adr_i[2:0])
+			case (adr_i[6:0])
 				3'd0:  dat_o<=8'h12;
 				3'd1:  dat_o<=8'h34;
 				3'd2:  dat_o<=r2;

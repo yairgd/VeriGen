@@ -24,7 +24,9 @@ begin
 	$dumpvars(0,tb1);
 	data_out=0;
 	data_out[23:16] = 8'h56;
+//	data_out[31:24] = 8'b10000010;
 	data_out[31:24] = 8'b00000001;
+
 
 
 	clk = 0;
@@ -66,16 +68,25 @@ end
 
 
 
+reg mosi;
+reg [2:0] cs_cnt;
+
 always @(posedge spi_clk or posedge reset)
 begin:mosi1
 	if (reset==1) begin
 		cs<=1;
 		cnt<=0;
+		cs_cnt<=1;
 		#5000;
 	end else if (cnt<SPI_WORDLEN) begin
-		{mosi ,data_out }<={data_out[SPI_WORDLEN-1:0] ,1'b0 };
 		cs<=1'b0;
+		if (cs_cnt>0) begin
+		cs_cnt<=cs_cnt-1;
+		end else begin
+		{mosi ,data_out }<={data_out[SPI_WORDLEN-1:0] ,1'b0 };
+	//	data_out<= { data_out[SPI_WORDLEN-2:0] ,1'b0 };
 		cnt<=cnt+1;
+		end
 	end else begin
 		cs<=1;
 		#5000
@@ -100,9 +111,8 @@ wire			 wbm_err_i;    // ERR_I error input
 wire			 wbm_rty_i;    // RTY_I retry input
 wire 			 wbm_cyc_o;    // CYC_O cycle output
 
-reg mosi;
 spislave #() spislave_ins (
-	.miso(),.mosi(mosi), .cs(cs), .spi_clk(spi_clk)  ,.clk(clk),.rst(reset),
+	.miso(),.mosi(mosi), .cs(cs), .spi_clk(  (~cs) & spi_clk)  ,.clk(clk),.rst(reset),
 	.wbm_adr_o(wbm_adr_o),.wbm_dat_i(wbm_dat_i),.wbm_dat_o(wbm_dat_o),.wbm_we_o(wbm_we_o),.wbm_sel_o(wbm_sel_o),
 	.wbm_ack_i(wbm_ack_i),.wbm_err_i(wbm_err_i),.wbm_rty_i(wbm_rty_i),.wbm_cyc_o(wbm_cyc_o),.wbm_stb_o ( wbm_stb_o) );
 
