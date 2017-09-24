@@ -51,11 +51,6 @@ begin:cs_detect
 	cs_d <={cs_d[0],cs};
 end
 
-reg [1:0] spi_clk_d;
-always @(posedge clk)
-begin:spi_clk_detect
-	spi_clk_d <={spi_clk_d[0],spi_clk};
-end
 
 
 reg cs_sync;
@@ -81,48 +76,40 @@ end
 
 
 
-/* short trigger for the wishbone bus controller */
-reg [6:0] cnt_prev;
 reg wbc_trig;
-always  @(posedge clk) 
-begin:wbc_trigger
-	cnt_prev<=cnt;
-	if (cnt==17 && cnt_prev==16) begin
-			wbc_trig<=1'b1;
-	end else begin
-			wbc_trig<=1'b0;			
-	end
-end
-
 
 reg [7:0] cmd;
 reg [7:0] out_data;
 assign miso = out_data[7];
 
-always  @(posedge clk) 
+always  @(posedge spi_clk or posedge rst) 
 begin:ser2reg
 
 
 	if (rst) begin
 		cnt<=0;
 		ser2reg_data<=32'b0;
-		out_data<=8'b0;	
-	end else if ( spi_clk_d ==2'b01 && !cs_sync && cnt<SPI_WORDLEN) begin
+		out_data<=8'b0;
+		wbc_trig<=1'b0;	
+	end else if ( cs_sync==0 && cnt<SPI_WORDLEN) begin
 		ser2reg_data   <={ser2reg_data[SPI_WORDLEN-2:0], mosi};
 		out_data       <=   {out_data[6:0],1'b0};
 		cnt<=cnt+1;
 		/* 8 MSB bits are command to FPGA*/
-		if (cnt==7) begin
+		if (cnt==9) begin
 			cmd<=ser2reg_data[7:0];
 		end
 
 		/* register value */
-		if (cnt==16) begin
+		if (cnt==17) begin
 			wbm_dat_o<=ser2reg_data[7:0];
 			wbm_we_o <=cmd[7:7];
 			wbm_adr_o<=cmd[6:0];
+			wbc_trig<=1'b1;	
+		end else begin
+			wbc_trig<=1'b0;	
 		end
-		if (cnt==24) begin
+		if (cnt==25) begin
 			out_data<=wbm_dat_i;
 		end
 

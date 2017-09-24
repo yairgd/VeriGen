@@ -24,8 +24,8 @@ begin
 	$dumpvars(0,tb1);
 	data_out=0;
 	data_out[23:16] = 8'h56;
-//	data_out[31:24] = 8'b10000010;
-	data_out[31:24] = 8'b00000001;
+	data_out[31:24] = 8'b10000010;
+//	data_out[31:24] = 8'b00000001;
 
 
 
@@ -70,15 +70,15 @@ assign mosi = data_out[SPI_WORDLEN-1:31];
 
 //reg mosi;
 //initial mosi=0;
-reg [2:0] cs_cnt;
+reg [8:0] cs_cnt;
 
 always @(posedge spi_clk or posedge reset)
 begin:mosi1
 	if (reset==1) begin
 		cs<=1;
 		cnt<=0;
-		cs_cnt<=9;
-		#5000;
+		cs_cnt<=2;
+	//	#5000;
 	end else if (cnt<SPI_WORDLEN) begin
 		cs<=1'b0;
 		if (cs_cnt>0) begin
