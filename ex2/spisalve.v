@@ -112,7 +112,7 @@ begin:ser2reg
 		out_data       <=   {out_data[6:0],1'b0};
 		cnt<=cnt+1;
 		/* 8 MSB bits are command to FPGA*/
-		if (cnt==8) begin
+		if (cnt==7) begin
 			cmd<=ser2reg_data[7:0];
 		end
 

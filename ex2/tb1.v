@@ -63,12 +63,13 @@ begin
 
 end
 
-//assign mosi = data_out[SPI_WORDLEN-1:31];
+assign mosi = data_out[SPI_WORDLEN-1:31];
 
 
 
 
-reg mosi;
+//reg mosi;
+//initial mosi=0;
 reg [2:0] cs_cnt;
 
 always @(posedge spi_clk or posedge reset)
@@ -76,15 +77,15 @@ begin:mosi1
 	if (reset==1) begin
 		cs<=1;
 		cnt<=0;
-		cs_cnt<=1;
+		cs_cnt<=9;
 		#5000;
 	end else if (cnt<SPI_WORDLEN) begin
 		cs<=1'b0;
 		if (cs_cnt>0) begin
 		cs_cnt<=cs_cnt-1;
 		end else begin
-		{mosi ,data_out }<={data_out[SPI_WORDLEN-1:0] ,1'b0 };
-	//	data_out<= { data_out[SPI_WORDLEN-2:0] ,1'b0 };
+	//	{mosi ,data_out }<={data_out[SPI_WORDLEN-1:0] ,1'b0 };
+		data_out<= { data_out[SPI_WORDLEN-2:0] ,1'b0 };
 		cnt<=cnt+1;
 		end
 	end else begin
@@ -95,7 +96,7 @@ begin:mosi1
 end
 
 
-
+assign spi_clk_1 = spi_clk & (cs_cnt==0);
 
 
 
@@ -112,7 +113,7 @@ wire			 wbm_rty_i;    // RTY_I retry input
 wire 			 wbm_cyc_o;    // CYC_O cycle output
 
 spislave #() spislave_ins (
-	.miso(),.mosi(mosi), .cs(cs), .spi_clk(  (~cs) & spi_clk)  ,.clk(clk),.rst(reset),
+	.miso(),.mosi(mosi), .cs(cs), .spi_clk( spi_clk_1)  ,.clk(clk),.rst(reset),
 	.wbm_adr_o(wbm_adr_o),.wbm_dat_i(wbm_dat_i),.wbm_dat_o(wbm_dat_o),.wbm_we_o(wbm_we_o),.wbm_sel_o(wbm_sel_o),
 	.wbm_ack_i(wbm_ack_i),.wbm_err_i(wbm_err_i),.wbm_rty_i(wbm_rty_i),.wbm_cyc_o(wbm_cyc_o),.wbm_stb_o ( wbm_stb_o) );
 
