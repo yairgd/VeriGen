@@ -59,7 +59,7 @@ end
 
 
 reg cs_sync;
-always @(cs_d)
+always @(posedge clk)
 begin
 	case (cs_d)
 	2'b01: 
