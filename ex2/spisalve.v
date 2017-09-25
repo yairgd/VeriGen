@@ -37,8 +37,6 @@ module  spislave # (
 
 
 reg [SPI_WORDLEN-1:0] ser2reg_data;
-reg [SPI_WORDLEN-1:0] ser2reg_data_next;
-reg [6:0] ser2reg_cnt;
 
 reg [6:0] cnt;
 
@@ -60,18 +58,22 @@ end
 
 reg cs_sync;
 always @(posedge clk)
-begin
-	case (cs_d)
-	2'b01: 
-	begin 
-		cs_sync=1'b1;
+begin:cs_sync1
+	if (rst) begin 
+		cs_sync<=1'b1;
+	end else begin
+		case (cs_d)
+		2'b01: 
+		begin 
+			cs_sync<=1'b1;
+		end
+		2'b10: 
+		begin
+			cs_sync<=1'b0;
+		end
+		default: cs_sync<=cs_sync;
+	endcase
 	end
-	2'b10: 
-	begin
-		cs_sync=1'b0;
-	end
-	default: cs_sync=cs_sync;
-endcase
 end
 
 
@@ -115,8 +117,8 @@ begin:ser2reg
 			/* register value */
 			if (cnt==2*DATA_WIDTH) begin
 				wbm_dat_o<=ser2reg_data[7:0];
-				wbm_we_o <=cmd[7:7];
-				wbm_adr_o<=cmd[6:0];
+				wbm_we_o <=cmd[DATA_WIDTH-1:DATA_WIDTH-1];
+				wbm_adr_o<=cmd[ADDR_WIDTH-1:0];
 			end
 			if (cnt==3*DATA_WIDTH) begin
 				out_data<=wbm_dat_i;
