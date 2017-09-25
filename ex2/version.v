@@ -30,6 +30,7 @@ always @(posedge clk)
 begin:rw_regs
 	if (rst) begin
 		ack_o <=1'b0;
+		r2<=8'h78;
 	end else if (stb_i  ) begin
 		ack_o<=1'b1;
 		if (!we_i) begin

@@ -24,14 +24,16 @@ begin
 	$dumpvars(0,tb1);
 	data_out=0;
 	data_out[23:16] = 8'h56;
-	data_out[31:24] = 8'b00000001;
+//	data_out[31:24] = 8'b00000001;
+	data_out[31:24] = 8'b10000010;
+
 
 
 	clk = 0;
 	spi_clk = 0;
 	cnt = 0;
 	enable = 0;
-
+	cs=1;
 
 end 
 
@@ -52,7 +54,7 @@ begin
 		reset=0;
 	end
 	#3
-	if (spi_cnt==8) begin
+	if (spi_cnt==1) begin
 		spi_clk=~spi_clk;
 		spi_cnt =0;
 	end else begin
@@ -71,7 +73,7 @@ begin:mosi1
 	if (reset==1) begin
 		cs<=1;
 		cnt<=0;
-		#5000;
+		#123;
 	end else if (cnt<SPI_WORDLEN) begin
 		{mosi ,data_out }<={data_out[SPI_WORDLEN-1:0] ,1'b0 };
 		cs<=1'b0;
