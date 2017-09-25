@@ -24,15 +24,16 @@ begin
 	$dumpvars(0,tb1);
 	data_out=0;
 	data_out[23:16] = 8'h56;
-	data_out[31:24] = 8'b00000001;
-
+//	data_out[31:24] = 8'b00000001;
+	data_out[31:24] = 8'b10000010;
 
 	clk = 0;
 	spi_clk = 0;
 	cnt = 0;
 	enable = 0;
+	cs=1;
 
-
+	#50000;
 end 
 
 
@@ -51,7 +52,7 @@ begin
 	end else begin
 		reset=0;
 	end
-	#3
+//	#3
 	if (spi_cnt==8) begin
 		spi_clk=~spi_clk;
 		spi_cnt =0;
@@ -61,24 +62,38 @@ begin
 
 end
 
-//assign mosi = data_out[SPI_WORDLEN-1:31];
+assign mosi = data_out[SPI_WORDLEN-1:31];
+//reg mosi;
+//initial mosi=0;
+reg [6:0] cnt_cs;
 
-
-
-
+assign spi_clk_0 = spi_clk & (cs==0);
 always @(posedge spi_clk or posedge reset)
 begin:mosi1
 	if (reset==1) begin
-		cs<=1;
+	//	cs<=1;
 		cnt<=0;
-		#5000;
+		cnt_cs<=5;
+	//	#5000;
+		cs<=0;
 	end else if (cnt<SPI_WORDLEN) begin
-		{mosi ,data_out }<={data_out[SPI_WORDLEN-1:0] ,1'b0 };
-		cs<=1'b0;
-		cnt<=cnt+1;
+	//	if (cnt_cs==1) begin
+	//		cnt_cs<=cnt_cs-1;
+
+	//	end else if (cnt_cs<=1) begin 
+		//	{mosi ,data_out }<={data_out[SPI_WORDLEN-1:0] ,1'b0 };
+		//	cs<=1'b0;
+			
+
+			data_out<={data_out[SPI_WORDLEN-2:0] ,1'b0 };
+			cnt<=cnt+1;
+	//	end else begin
+	//		cnt_cs<=cnt_cs-1;
+	//		cs<=1'b0;
+	//	end
 	end else begin
+		#1000;
 		cs<=1;
-		#5000
 		$finish;
 	end
 end
@@ -100,9 +115,9 @@ wire			 wbm_err_i;    // ERR_I error input
 wire			 wbm_rty_i;    // RTY_I retry input
 wire 			 wbm_cyc_o;    // CYC_O cycle output
 
-reg mosi;
+//reg mosi;
 spislave #() spislave_ins (
-	.miso(),.mosi(mosi), .cs(cs), .spi_clk(spi_clk)  ,.clk(clk),.rst(reset),
+	.miso(),.mosi(mosi), .cs(cs), .spi_clk(spi_clk_0)  ,.clk(clk),.rst(reset),
 	.wbm_adr_o(wbm_adr_o),.wbm_dat_i(wbm_dat_i),.wbm_dat_o(wbm_dat_o),.wbm_we_o(wbm_we_o),.wbm_sel_o(wbm_sel_o),
 	.wbm_ack_i(wbm_ack_i),.wbm_err_i(wbm_err_i),.wbm_rty_i(wbm_rty_i),.wbm_cyc_o(wbm_cyc_o),.wbm_stb_o ( wbm_stb_o) );
 

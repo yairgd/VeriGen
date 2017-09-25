@@ -57,10 +57,11 @@ begin:spi_clk_detect
 	spi_clk_d <={spi_clk_d[0],spi_clk};
 end
 
-
+initial cs_d = 1;
 reg cs_sync;
 always @(cs_d)
 begin
+
 	case (cs_d)
 		2'b01: 
 		begin 
@@ -77,23 +78,12 @@ end
 
 
 /* short trigger for the wishbone bus controller */
-reg [6:0] cnt_prev;
-always  @(posedge clk) 
-begin:wbc_trigger
-	cnt_prev<=cnt;
-	if (cnt==17 && cnt_prev==16) begin
-			wbc_trig<=1'b1;
-	end else begin
-			wbc_trig<=1'b0;			
-	end
-end
-
 
 reg [7:0] cmd;
 reg [7:0] out_data;
 assign miso = out_data[7];
 reg wbc_trig;
-always  @(posedge clk) 
+always  @(posedge spi_clk or posedge rst) 
 begin:ser2reg
 
 
@@ -101,9 +91,8 @@ begin:ser2reg
 		cnt<=0;
 		ser2reg_data<=32'b0;
 		wbc_trig<=1'b0;
-	end else if (spi_clk_d ==2'b01 ) begin
-	
-		if (!cs_sync && cnt<SPI_WORDLEN) begin
+//	end else if (spi_clk_d ==2'b01 ) begin
+	end else if (cs_sync==0 && cnt<SPI_WORDLEN) begin
 			ser2reg_data   <={ser2reg_data[SPI_WORDLEN-2:0], mosi};
 			out_data       <=   {out_data[6:0],1'b0};
 			cnt<=cnt+1;
@@ -118,14 +107,18 @@ begin:ser2reg
 				wbm_dat_o<=ser2reg_data[7:0];
 				wbm_we_o <=cmd[7:7];
 				wbm_adr_o<=cmd[6:0];
+				wbc_trig<=1'b1;
+
+			end else begin
+				wbc_trig<=1'b0;		
 			end
 			if (cnt==24) begin
 				out_data<=wbm_dat_i;
 			end
 
 
-		end
 	end
+//	end
 end
 
 
