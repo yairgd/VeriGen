@@ -91,39 +91,47 @@ end
 
 reg [7:0] cmd;
 reg [7:0] out_data;
-assign miso = out_data[7];
+assign miso =  out_data[7];
 reg wbc_trig;
 always  @(posedge clk) 
 begin:ser2reg
 
 
-	if (rst) begin
+	if (rst==1 || cs_d==2'b01) begin
 		cnt<=0;
 		ser2reg_data<=32'b0;
-	end else if (spi_clk_d ==2'b01 ) begin
+		out_data<=8'haa;
+	//	ser2reg_data   <={ser2reg_data, mosi};
 	
-		if (!cs_sync && cnt<SPI_WORDLEN) begin
-			ser2reg_data   <={ser2reg_data[SPI_WORDLEN-2:0], mosi};
+	end else if (spi_clk_d ==2'b01 ) begin
+	//	ser2reg_data   <={ser2reg_data[SPI_WORDLEN-2:0], mosi};
+		ser2reg_data   <={ser2reg_data, mosi};
+
+		if (! (cnt==DATA_WIDTH) && ! (cnt==3*DATA_WIDTH )  && ! (cnt==2*DATA_WIDTH ) ) begin
 			out_data       <=   {out_data[DATA_WIDTH-2:0],1'b0};
-			cnt<=cnt+1;
-			/* 8 MSB bits are command to FPGA*/
-			if (cnt==DATA_WIDTH) begin
-				cmd<=ser2reg_data[DATA_WIDTH-1:0];
+		end
 
-			end
+		/* 8 MSB bits are command to FPGA*/
+		if (cnt==DATA_WIDTH) begin
+			cmd<=ser2reg_data[DATA_WIDTH-1:0];
+			out_data<=ser2reg_data[DATA_WIDTH-1:0];
+		end
 
-			/* register value */
-			if (cnt==2*DATA_WIDTH) begin
-				wbm_dat_o<=ser2reg_data[7:0];
-				wbm_we_o <=cmd[7:7];
-				wbm_adr_o<=cmd[6:0];
-			end
-			if (cnt==3*DATA_WIDTH) begin
-				out_data<=wbm_dat_i;
-			end
-
+		/* register value */
+		if (cnt==2*DATA_WIDTH) begin
+			wbm_dat_o<=ser2reg_data[7:0];
+			wbm_we_o <=cmd[7:7];
+			wbm_adr_o<=cmd[6:0];
+			out_data<=ser2reg_data[DATA_WIDTH-1:0];
 
 		end
+
+		if (cnt==3*DATA_WIDTH) begin
+			out_data<=wbm_dat_i;
+		end
+
+
+		cnt<=cnt+1;
 	end
 end
 
