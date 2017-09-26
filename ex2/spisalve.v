@@ -61,6 +61,7 @@ end
 reg cs_sync;
 always @(posedge clk)
 begin
+	if (!rst) begin 
 	case (cs_d)
 	2'b01: 
 	begin 
@@ -72,9 +73,10 @@ begin
 	end
 	default: cs_sync=cs_sync;
 endcase
+end else begin
+	cs_sync<=1;
 end
-
-
+end
 
 /* short trigger for the wishbone bus controller */
 reg [6:0] cnt_prev;
@@ -98,32 +100,33 @@ begin:ser2reg
 
 
 	if (rst) begin
-		cnt<=0;
-		ser2reg_data<=32'b0;
-	end else if (spi_clk_d ==2'b01 ) begin
-	
-		if (!cs_sync && cnt<SPI_WORDLEN) begin
-			ser2reg_data   <={ser2reg_data[SPI_WORDLEN-2:0], mosi};
-			out_data       <=   {out_data[DATA_WIDTH-2:0],1'b0};
-			cnt<=cnt+1;
-			/* 8 MSB bits are command to FPGA*/
+		cnt=8'h0;
+	//	ser2reg_data<=32'b0;
+	end else if ( (spi_clk_d ==2'b01 &&  cs_sync==0) ||   cnt==133) begin
+			ser2reg_data   ={ser2reg_data[SPI_WORDLEN-2:0], mosi};
+			cnt=cnt+1;
+
+			if ( ! (cnt==DATA_WIDTH) && !(cnt==2*DATA_WIDTH) && !(cnt==3*DATA_WIDTH)) begin
+				out_data       =   {out_data[DATA_WIDTH-2:0],1'b0};
+			end
+						/* 8 MSB bits are command to FPGA*/
 			if (cnt==DATA_WIDTH) begin
-				cmd<=ser2reg_data[DATA_WIDTH-1:0];
+				cmd=ser2reg_data[DATA_WIDTH-1:0];
 
 			end
 
 			/* register value */
 			if (cnt==2*DATA_WIDTH) begin
-				wbm_dat_o<=ser2reg_data[7:0];
-				wbm_we_o <=cmd[7:7];
-				wbm_adr_o<=cmd[6:0];
+				wbm_dat_o=ser2reg_data[7:0];
+				wbm_we_o =cmd[7:7];
+				wbm_adr_o=cmd[6:0];
 			end
 			if (cnt==3*DATA_WIDTH) begin
-				out_data<=wbm_dat_i;
+				out_data=wbm_dat_i;
 			end
 
 
-		end
+		
 	end
 end
 
