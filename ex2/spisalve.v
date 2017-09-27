@@ -65,10 +65,13 @@ begin:spi_clk_detect
 	spi_clk_d <={spi_clk_d[0],spi_clk};
 end
 
-/*
+
 reg cs_sync;
 always @(posedge clk)
 begin
+	if (rst) begin
+		cs_sync=1'b1;
+	end else begin
 	case (cs_d)
 	2'b01: 
 	begin 
@@ -81,10 +84,15 @@ begin
 	default: cs_sync=cs_sync;
 endcase
 end
+end
+
+
+
+/* 
+* short trigger for the wishbone bus controller
+* the cycles 16-23 - are  dummy data . so this time can be useful to
+* process state machine input data (wishbone bus) the state machine
 */
-
-
-/* short trigger for the wishbone bus controller */
 reg [6:0] cnt_prev;
 always  @(posedge clk) 
 begin:wbc_trigger
@@ -101,23 +109,26 @@ reg [7:0] cmd;
 reg [7:0] out_data;
 assign miso =  out_data[7];
 reg wbc_trig;
-reg d;
 always  @(posedge clk) 
 begin:ser2reg
 
 
 	if (rst==1 || cs_d==2'b01) begin
 		cnt=8'h1;
-	//	ser2reg_data<=32'b0;
 		out_data=8'haa;
-		d=1'b0;
-	//	ser2reg_data   <={ser2reg_data, mosi};
 	
-	end else if (d==0 && ( spi_clk_d ==2'b01  || cnt==33) ) begin
-	//	ser2reg_data   <={ser2reg_data[SPI_WORDLEN-2:0], mosi};
-		ser2reg_data   ={ser2reg_data, mosi};
+	end else if (cs_sync==0 && ( spi_clk_d ==2'b01  || cnt==33) ) begin
+		/* since the module uses spi_clk_d  and not master spi clock (wrong at fpga in/out
+		* layout) ,the slave trigger ocures after the master spi
+		* clos=ck trigger and the condition cnt==33 trigger the last
+		* clock at the slave
+		*/ 
+		ser2reg_data   ={ser2reg_data[SPI_WORDLEN-2:0], mosi};
 
-		if (! (cnt==DATA_WIDTH+0) && ! (cnt==3*DATA_WIDTH+0 )  && ! (cnt==2*DATA_WIDTH+0 ) ) begin
+		/* this block not works at blocking mode since the mosi and the miso not work on
+		* the same clock domain (see why cnt==33 condition - above)
+		*/
+		if (! (cnt==DATA_WIDTH) && ! (cnt==3*DATA_WIDTH )  && ! (cnt==2*DATA_WIDTH ) ) begin
 			out_data       =   {out_data[DATA_WIDTH-2:0],1'b0};
 		end
 
@@ -128,7 +139,7 @@ begin:ser2reg
 		end
 
 		/* register value */
-		if (cnt==2*DATA_WIDTH+0) begin
+		if (cnt==2*DATA_WIDTH) begin
 			wbm_dat_o=ser2reg_data[7:0];
 			wbm_we_o =cmd[7:7];
 			wbm_adr_o=cmd[6:0];
@@ -142,8 +153,6 @@ begin:ser2reg
 
 
 		cnt=cnt+1;
-	end else begin if (d==1 &&  spi_clk_d ==2)
-		d=0;
 	end
 
 end
