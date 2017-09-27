@@ -45,6 +45,14 @@ reg [6:0] cnt;
 
 //initial ser2reg_data = 0;
 
+reg [1:0] mosi_d;
+always @(posedge clk)
+begin:mosi_detect
+	if ( spi_clk_d ==2'b01 ) begin
+	mosi_d <={mosi_d[0],mosi};
+	end	
+end
+
 reg [1:0] cs_d;
 always @(posedge clk)
 begin:cs_detect
@@ -57,7 +65,7 @@ begin:spi_clk_detect
 	spi_clk_d <={spi_clk_d[0],spi_clk};
 end
 
-
+/*
 reg cs_sync;
 always @(posedge clk)
 begin
@@ -73,7 +81,7 @@ begin
 	default: cs_sync=cs_sync;
 endcase
 end
-
+*/
 
 
 /* short trigger for the wishbone bus controller */
@@ -93,46 +101,51 @@ reg [7:0] cmd;
 reg [7:0] out_data;
 assign miso =  out_data[7];
 reg wbc_trig;
+reg d;
 always  @(posedge clk) 
 begin:ser2reg
 
 
 	if (rst==1 || cs_d==2'b01) begin
-		cnt<=0;
-		ser2reg_data<=32'b0;
-		out_data<=8'haa;
+		cnt=8'h1;
+	//	ser2reg_data<=32'b0;
+		out_data=8'haa;
+		d=1'b0;
 	//	ser2reg_data   <={ser2reg_data, mosi};
 	
-	end else if (spi_clk_d ==2'b01 ) begin
+	end else if (d==0 && ( spi_clk_d ==2'b01  || cnt==33) ) begin
 	//	ser2reg_data   <={ser2reg_data[SPI_WORDLEN-2:0], mosi};
-		ser2reg_data   <={ser2reg_data, mosi};
+		ser2reg_data   ={ser2reg_data, mosi};
 
-		if (! (cnt==DATA_WIDTH) && ! (cnt==3*DATA_WIDTH )  && ! (cnt==2*DATA_WIDTH ) ) begin
-			out_data       <=   {out_data[DATA_WIDTH-2:0],1'b0};
+		if (! (cnt==DATA_WIDTH+0) && ! (cnt==3*DATA_WIDTH+0 )  && ! (cnt==2*DATA_WIDTH+0 ) ) begin
+			out_data       =   {out_data[DATA_WIDTH-2:0],1'b0};
 		end
 
 		/* 8 MSB bits are command to FPGA*/
-		if (cnt==DATA_WIDTH) begin
-			cmd<=ser2reg_data[DATA_WIDTH-1:0];
-			out_data<=ser2reg_data[DATA_WIDTH-1:0];
+		if (cnt==DATA_WIDTH+0) begin
+			cmd=ser2reg_data[DATA_WIDTH-1:0];
+			out_data=ser2reg_data[DATA_WIDTH-1:0];
 		end
 
 		/* register value */
-		if (cnt==2*DATA_WIDTH) begin
-			wbm_dat_o<=ser2reg_data[7:0];
-			wbm_we_o <=cmd[7:7];
-			wbm_adr_o<=cmd[6:0];
-			out_data<=ser2reg_data[DATA_WIDTH-1:0];
+		if (cnt==2*DATA_WIDTH+0) begin
+			wbm_dat_o=ser2reg_data[7:0];
+			wbm_we_o =cmd[7:7];
+			wbm_adr_o=cmd[6:0];
+			out_data=ser2reg_data[DATA_WIDTH-1:0];
 
 		end
 
-		if (cnt==3*DATA_WIDTH) begin
-			out_data<=wbm_dat_i;
+		if (cnt==3*DATA_WIDTH+0) begin
+			out_data=wbm_dat_i;
 		end
 
 
-		cnt<=cnt+1;
+		cnt=cnt+1;
+	end else begin if (d==1 &&  spi_clk_d ==2)
+		d=0;
 	end
+
 end
 
 

@@ -25,7 +25,8 @@ begin
 	data_out=0;
 	data_out[23:16] = 8'h56;
 //	data_out[31:24] = 8'b00000001;
-	data_out[31:24] = 8'b10000010;
+//	data_out[31:24] = 8'b10000010;
+	data_out[31:24] = 8'haa;
 
 
 
@@ -105,7 +106,7 @@ wire			 wbm_rty_i;    // RTY_I retry input
 wire 			 wbm_cyc_o;    // CYC_O cycle output
 
 spislave #() spislave_ins (
-	.miso(),.mosi(mosi), .cs(cs), .spi_clk(spi_clk&(cs==0))  ,.clk(clk),.rst(reset),
+	.miso(),.mosi(mosi_o), .cs(cs), .spi_clk(spi_clk&(cs==0))  ,.clk(clk),.rst(reset),
 	.wbm_adr_o(wbm_adr_o),.wbm_dat_i(wbm_dat_i),.wbm_dat_o(wbm_dat_o),.wbm_we_o(wbm_we_o),.wbm_sel_o(wbm_sel_o),
 	.wbm_ack_i(wbm_ack_i),.wbm_err_i(wbm_err_i),.wbm_rty_i(wbm_rty_i),.wbm_cyc_o(wbm_cyc_o),.wbm_stb_o ( wbm_stb_o) );
 
