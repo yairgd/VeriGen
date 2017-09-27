@@ -69,9 +69,6 @@ end
 reg cs_sync;
 always @(posedge clk)
 begin
-	if (rst) begin
-		cs_sync=1'b1;
-	end else begin
 	case (cs_d)
 	2'b01: 
 	begin 
@@ -83,7 +80,7 @@ begin
 	end
 	default: cs_sync=cs_sync;
 endcase
-end
+
 end
 
 
