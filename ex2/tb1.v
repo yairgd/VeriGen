@@ -113,9 +113,18 @@ spislave #() spislave_ins (
 
 
 
-version  #()   ver_inst (
+//version  #()   ver_inst (
+//	.clk(clk),.rst(reset),.addrmask(4'b0000),.adr_i (wbm_adr_o), .dat_i (wbm_dat_o),.dat_o (wbm_dat_i),.sel_i(1'b0),
+//	.we_i (wbm_we_o), .stb_i (wbm_stb_o), .ack_o (wbm_ack_i),.cyc_i (1'b0) ); 
+
+
+inout scl_pin;
+inout sda_pin;
+
+sw_i2c  #()   sw_i2c_inst (
 	.clk(clk),.rst(reset),.addrmask(4'b0000),.adr_i (wbm_adr_o), .dat_i (wbm_dat_o),.dat_o (wbm_dat_i),.sel_i(1'b0),
-	.we_i (wbm_we_o), .stb_i (wbm_stb_o), .ack_o (wbm_ack_i),.cyc_i (1'b0) ); 
+	.we_i (wbm_we_o), .stb_i (wbm_stb_o), .ack_o (wbm_ack_i),.cyc_i (1'b0), .scl_pin (scl_pin) , .sda_pin(sda_pin)  ); 
+
 
 
 
