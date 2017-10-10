@@ -80,10 +80,9 @@ begin:rw_regs
 		if (!we_i) begin
 			case (adr_i[2:0])
 				3'd0: begin
-					dat_o[1] <=scl_i;
-					dat_o[4] <=sda_i;
+					data_o={1'b1,1'b1,sta_o,sda_i,sda_t,scl_o,scl_i,scl_t};
 				end
-				default: dat_o<=0;
+				default: dat_o<=8'aa; // magic
 			endcase
 		end else begin
 			case (adr_i[2:0])

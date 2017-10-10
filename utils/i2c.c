@@ -18,6 +18,18 @@
  */
 
 // Hardware-specific support functions that MUST be customized:
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/types.h>
+#include <linux/spi/spidev.h>
+#include <errno.h>
 
 #define I2CSPEED 100
 
@@ -28,6 +40,10 @@
 #define SDA_I 1<<4
 #define SDA_O 1<<5
 
+static	char *device ="/dev/spidev3.0";
+static bool started = false; // global data
+
+
 
 /**
  * Created  09/28/2017
@@ -35,7 +51,7 @@
  * @param   
  * @return  
  */
-static int transfer(char const *tx, char *rx, size_t len)
+static int transfer(char const *tx, char *rx)
 {
 	int ret = -1;
 	uint32_t mode = 0;
@@ -44,7 +60,7 @@ static int transfer(char const *tx, char *rx, size_t len)
 	struct spi_ioc_transfer tr = {
 		.tx_buf = (unsigned long) tx,
 		.rx_buf = (unsigned long) rx,
-		.len = len,
+		.len = 4,
 		.delay_usecs = 20,
 		.speed_hz = speed, // 10 MHz
 		.bits_per_word = 8,
@@ -103,13 +119,93 @@ void clear_SDA(void); // Actively drive SDA signal low
 void arbitration_lost(void);
 
 
-bool started = false; // global data
 
-
-static	char *device ="/dev/spidev3.0";
+bool read_SCL(void);  // Return current level of SCL line, 0 or 1
 
 
 
+/**
+ * Created  09/29/2017
+ * @brief   Returns I2C current signals level
+ * @param   
+ * @return  
+ */
+char read_signals()
+{
+	char const tx[]={0,0,0,0};
+	char rx[4];
+	transfer(tx, rx);
+	return rx[3];
+
+}
+
+/**
+ * Created  09/29/2017
+ * @brief    Return current level of SCL line, 0 or 1
+ * @param   
+ * @return  
+ */
+bool read_SCL(void)  {
+	char sig = read_signals();
+	return (sig&SCL_I>0);
+}
+
+
+/**
+ * Created  09/29/2017
+ * @brief    Return current level of SDL line, 0 or 1
+ * @param   
+ * @return  
+ */
+bool read_SDA(void)  {
+	char sig = read_signals();
+	return (sig&SDA_I>0);
+}
+
+
+/**
+ * Created  09/29/2017
+ * @brief   Actively drive SCL signal low
+ * @param   
+ * @return  
+ */
+void clear_SCL(void)  {
+	char tx[4]={0x80,0,0,0};
+	char rx[4];
+	char sig = read_signals();
+	tx[1] = sig&(~SCL_I)  | sig&(~SCL_T);
+	transfer(tx, rx);
+}
+
+/**
+ * Created  09/29/2017
+ * @brief  Do not drive SCL (set pin high-impedance) 
+ * @param   
+ * @return  
+ */
+void set_SCL(void)  
+{
+	char tx[4]={0x80,0,0,0};
+	char rx[4];
+	char sig = read_signals();
+	tx[1] = sig|(SCL_T);
+	transfer(tx, rx);
+}
+
+/**
+ * Created  09/29/2017
+ * @brief  Do not drive SDA (set pin high-impedance) 
+ * @param   
+ * @return  
+ */
+void set_SDA(void)  
+{
+	char tx[4]={0x80,0,0,0};
+	char rx[4];
+	char sig = read_signals();
+	tx[1] = sig|(SDA_T);
+	transfer(tx, rx);
+}
 
 
 void i2c_start_cond(void) {
@@ -385,15 +481,5 @@ unsigned char i2c_read_byte(bool nack, bool send_stop) {
 
 void I2C_delay(void) { 
 
-  volatile int v;
-
-  int i;
-
-
-  for (i = 0; i < I2CSPEED / 2; ++i) {
-
-    v;
-
-  }
-
+ usleep(10); 
 }
