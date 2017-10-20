@@ -70,6 +70,7 @@ assign sda_pin = scl_t ? 1'bz : sda_o;
 
 
 
+/* WB slave implemanattion */
 always @(posedge clk) 
 begin:rw_regs
 	if (rst) begin
@@ -80,9 +81,9 @@ begin:rw_regs
 		if (!we_i) begin
 			case (adr_i[2:0])
 				3'd0: begin
-					data_o={1'b1,1'b1,sta_o,sda_i,sda_t,scl_o,scl_i,scl_t};
+					dat_o={1'b1,1'b1,sda_o,sda_i,sda_t,scl_o,scl_i,scl_t};
 				end
-				default: dat_o<=8'aa; // magic
+				default: dat_o<=8'haa; // magic
 			endcase
 		end else begin
 			case (adr_i[2:0])

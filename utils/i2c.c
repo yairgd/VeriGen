@@ -40,8 +40,13 @@
 #define SDA_I 1<<4
 #define SDA_O 1<<5
 
-static	char *device ="/dev/spidev3.0";
+#define SIM
+
 static bool started = false; // global data
+
+
+FILE *file;
+
 
 
 
@@ -53,9 +58,27 @@ static bool started = false; // global data
  */
 static int transfer(char const *tx, char *rx)
 {
-	int ret = -1;
+
+#ifdef SIM
+	char *bin[]={
+	"00",
+	"01",
+	"10",
+	"11"
+}; 
+	int i;
+	for (i=0;i<4;i++)
+		fprintf (file,"%s%s_%s%s\n",bin[ (tx[i]&0b11000000)>>6 ],bin[ (tx[i]&0b00110000) >>4 ], bin[ (tx[i]&0b00001100) >>2] , bin[ (tx[i]&0b00000011) >>0]);
+
+	return 0;
+#else
+
+
+	char *device ="/dev/spidev3.0";
+ 	int ret = -1;
 	uint32_t mode = 0;
 	uint32_t speed = 25000000;
+
 
 	struct spi_ioc_transfer tr = {
 		.tx_buf = (unsigned long) tx,
@@ -99,6 +122,7 @@ static int transfer(char const *tx, char *rx)
 quit:
 	close(fd);
 	return ret;
+#endif
 }
 
 
@@ -116,7 +140,7 @@ void set_SDA(void);   // Do not drive SDA (set pin high-impedance)
 
 void clear_SDA(void); // Actively drive SDA signal low
 
-void arbitration_lost(void);
+void arbitration_lost(void){};
 
 
 
@@ -176,6 +200,22 @@ void clear_SCL(void)  {
 	tx[1] = sig&(~SCL_I)  | sig&(~SCL_T);
 	transfer(tx, rx);
 }
+
+
+/**
+ * Created  09/29/2017
+ * @brief   Actively drive SDA signal low
+ * @param   
+ * @return  
+ */
+void clear_SDA(void)  {
+	char tx[4]={0x80,0,0,0};
+	char rx[4];
+	char sig = read_signals();
+	tx[1] = sig&(~SDA_I)  | sig&(~SDA_T);
+	transfer(tx, rx);
+}
+
 
 /**
  * Created  09/29/2017
@@ -482,4 +522,17 @@ unsigned char i2c_read_byte(bool nack, bool send_stop) {
 void I2C_delay(void) { 
 
  usleep(10); 
+}
+
+int main()
+{
+	file = fopen ("ram.list","w");
+
+	char tx[4]={123,54,0xaa,0x55};
+	char rx[4];
+	transfer(tx, rx);
+
+	i2c_write_byte(1,0,123);
+	fclose (file);
+
 }

@@ -90,6 +90,7 @@ end
 * the cycles 16-23 - are  dummy data . so this time can be useful to
 * process state machine input data (wishbone bus) the state machine
 */
+reg wbc_trig;
 reg [6:0] cnt_prev;
 always  @(posedge clk) 
 begin:wbc_trigger
@@ -105,7 +106,6 @@ end
 reg [7:0] cmd;
 reg [7:0] out_data;
 assign miso =  out_data[7];
-reg wbc_trig;
 always  @(posedge clk) 
 begin:ser2reg
 
@@ -157,8 +157,8 @@ end
 
 
 
+/* WB master */
 localparam  wbc_idle_s=3'd0,wbc_stb_s=3'd1;
-
 reg [2:0] wbc_state;
 always @(posedge clk) 
 begin:wbc_controller

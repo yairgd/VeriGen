@@ -5,7 +5,7 @@ reg clk, spi_clk,reset, enable;
 wire [3:0] count; 
 reg [SPI_WORDLEN-1:0] data_out;
 reg [SPI_WORDLEN-1:0] data_in;
-reg cs;
+//reg cs;
 
 
 reg [7:0]cnt;
@@ -34,7 +34,7 @@ begin
 	spi_clk = 0;
 	cnt = 0;
 	enable = 0;
-	cs=1;
+//	cs=1;
 
 end 
 
@@ -68,6 +68,7 @@ end
 
 
 
+/*
 reg mosi_o,mosi;
 always @(posedge spi_clk or posedge reset)
 begin:mosi1
@@ -88,27 +89,50 @@ begin:mosi1
 	end
 end
 
+*/
 
 
 
 
 
+wire  [ADDR_WIDTH-1:0]   spi_adr;    // ADR_O() address output
+wire  [DATA_WIDTH-1:0]   spi_dat_i;    // DAT_I() data in
+wire  [DATA_WIDTH-1:0]   spi_dat_o;    // DAT_O() data out
+wire 			 spi_we;     // WE_O write enable output
+wire  [SELECT_WIDTH-1:0] spi_sel;    // SEL_O() select output
+wire  		         spi_stb;    // STB_O strobe output
+wire			 spi_ack;    // ACK_I acknowledge input
+wire			 spi_err;    // ERR_I error input
+wire			 spi_rty;    // RTY_I retry input
+wire 			 spi_cyc;    // CYC_O cycle output
 
-wire  [ADDR_WIDTH-1:0]   wbm_adr_o;    // ADR_O() address output
-wire  [DATA_WIDTH-1:0]   wbm_dat_i;    // DAT_I() data in
-wire  [DATA_WIDTH-1:0]   wbm_dat_o;    // DAT_O() data out
-wire 			 wbm_we_o;     // WE_O write enable output
-wire  [SELECT_WIDTH-1:0] wbm_sel_o;    // SEL_O() select output
-wire  		         wbm_stb_o;    // STB_O strobe output
-wire			 wbm_ack_i;    // ACK_I acknowledge input
-wire			 wbm_err_i;    // ERR_I error input
-wire			 wbm_rty_i;    // RTY_I retry input
-wire 			 wbm_cyc_o;    // CYC_O cycle output
+
+
+wire  [ADDR_WIDTH-1:0]   bfm_adr;    // ADR_O() address output
+wire  [DATA_WIDTH-1:0]   bfm_dat_i;    // DAT_I() data in
+wire  [DATA_WIDTH-1:0]   bfm_dat_o;    // DAT_O() data out
+wire 			 bfm_we;     // WE_O write enable output
+wire  [4-1:0] bfm_sel;    // SEL_O() select output
+wire  		         bfm_stb;    // STB_O strobe output
+wire			 bfm_ack;    // ACK_I acknowledge input
+wire			 bfm_err;    // ERR_I error input
+wire			 bfm_rty;    // RTY_I retry input
+wire 			 bfm_cyc;    // CYC_O cycle output
+
+
+
+
+spimaster #() spimaster_ins (
+	.clk(clk),.rst(reset),.cs(cs),.mosi(mosi),.miso (miso),.spi_clk(spi_clk),
+	.wbs_adr_i (bfm_adr), .wbs_dat_i(bfm_dat_o),     .wbs_dat_o(bfm_dat), .wbs_we_i (bfm_we_e),  .wbs_sel_i (bfm_sel),
+	.wbs_ack_o (bfm_ack), .wbs_err_i(bfm_err),     .wbs_rty_i(bfm_rty), .wbs_cyc_i(bfm_cyc), .wbs_stb_i (bfm_stb) );
+	
+
 
 spislave #() spislave_ins (
-	.miso(),.mosi(mosi_o), .cs(cs), .spi_clk(spi_clk&(cs==0))  ,.clk(clk),.rst(reset),
-	.wbm_adr_o(wbm_adr_o),.wbm_dat_i(wbm_dat_i),.wbm_dat_o(wbm_dat_o),.wbm_we_o(wbm_we_o),.wbm_sel_o(wbm_sel_o),
-	.wbm_ack_i(wbm_ack_i),.wbm_err_i(wbm_err_i),.wbm_rty_i(wbm_rty_i),.wbm_cyc_o(wbm_cyc_o),.wbm_stb_o ( wbm_stb_o) );
+	.miso(miso),.mosi(mosi), .cs(cs), .spi_clk(spi_clk&(cs==0))  ,.clk(clk),.rst(reset),
+	.wbm_adr_o(spi_adr), .wbm_dat_i(spi_dat_i), .wbm_dat_o(spi_dat_o), .wbm_we_o (spi_we), .wbm_sel_o ( spi_sel ),
+	.wbm_ack_i(spi_ack), .wbm_err_i(spi_err),   .wbm_rty_i(spi_rty),   .wbm_cyc_o(spi_cyc),.wbm_stb_o ( spi_stb ) );
 
 
 
@@ -120,10 +144,9 @@ spislave #() spislave_ins (
 
 inout scl_pin;
 inout sda_pin;
-
 sw_i2c  #()   sw_i2c_inst (
-	.clk(clk),.rst(reset),.addrmask(4'b0000),.adr_i (wbm_adr_o), .dat_i (wbm_dat_o),.dat_o (wbm_dat_i),.sel_i(1'b0),
-	.we_i (wbm_we_o), .stb_i (wbm_stb_o), .ack_o (wbm_ack_i),.cyc_i (1'b0), .scl_pin (scl_pin) , .sda_pin(sda_pin)  ); 
+	.clk(clk),.rst(reset),.addrmask(4'b0000),.adr_i (spi_adr), .dat_i (spi_dat_o),.dat_o (spi_dat_i),.sel_i(spi_sel),
+	.we_i (wbm_we_o), .stb_i (wbm_stb_o), .ack_o (spi_ack),.cyc_i (1'b0), .scl_pin (scl_pin) , .sda_pin(sda_pin)  ); 
 
 
 
