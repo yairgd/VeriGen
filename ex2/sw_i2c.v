@@ -58,39 +58,57 @@ assign sda_pin = sda_t ? 1'bz : sda_o;
 reg [7:0] r0;
 
 
-reg scl_o;
-reg sda_o;
+//reg scl_o;
+//reg sda_o;
 reg scl_t;
 reg sda_t;
+wire scl_i;
+wire sda_i;
 
-assign scl_i = scl_pin;
-assign scl_pin = scl_t ? 1'bz : scl_o;
-assign sda_i  = sda_pin;
-assign sda_pin = scl_t ? 1'bz : sda_o;
+assign scl_i   = scl_pin;
+assign scl_pin = scl_t ? 1'bz : 1'b0; //scl_o;
+assign sda_i   = sda_pin;
+assign sda_pin = sda_t ? 1'bz : 1'b0; //sda_o;
 
 
+
+
+wire [2:0] yy=3'd0;
 
 always @(posedge clk) 
 begin:rw_regs
+
+	// scl_i<=scl_pin;
+	// sda_i<=sda_pin;
 	if (rst) begin
+	
+	//	scl_o<=1'b0;
+	//	sda_o<=1'b0;
+		scl_t<=1'b0;
+		sda_t<=1'b0;
+
 		ack_o <=1'b0;
-		scl_t<=1'b1; // set i2c pin in high impedance mode
-	end else if (stb_i  && addrmask==adr_i[6:3] ) begin
+	end else if (stb_i ) begin
+	
 		ack_o<=1'b1;
 		if (!we_i) begin
 			case (adr_i[2:0])
-				3'd0: begin
-					data_o={1'b1,1'b1,sta_o,sda_i,sda_t,scl_o,scl_i,scl_t};
-				end
-				default: dat_o<=8'aa; // magic
+				3'd0: dat_o<={1'b1,1'b1,1'b1/*sda_o*/,sda_i,sda_i,1'b1/*scl_o*/,scl_i,scl_t};
+				default: dat_o<=adr_i;//8'hbc; // magic
 			endcase
 		end else begin
 			case (adr_i[2:0])
 				3'd0: begin
 					scl_t<=dat_i[0];
 					sda_t<=dat_i[3];
-					scl_o<=dat_i[2];
-					sda_o<=dat_i[5];
+				//	scl_o<=dat_i[2];
+				//	sda_o<=dat_i[5];
+				end
+				default: begin
+					scl_t<=scl_t;
+					sda_t<=sda_t;
+				//	scl_o<=scl_o;
+				//	sda_o<=sda_o;
 				end
 			endcase
 		end

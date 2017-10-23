@@ -33,14 +33,14 @@
 
 #define I2CSPEED 100
 
-#define SCL_T 1<<0
-#define SCL_I 1<<1
-#define SCL_O 1<<2
-#define SDA_T 1<<3
-#define SDA_I 1<<4
-#define SDA_O 1<<5
+#define SCL_T  ( 1<<0 )
+#define SCL_I  ( 1<<1 )
+#define SCL_O  ( 1<<2 )
+#define SDA_T  ( 1<<3 )
+#define SDA_I  ( 1<<4 )
+#define SDA_O  ( 1<<5 )
 
-static	char *device ="/dev/spidev3.0";
+static	char *device ="/dev/spidev3.1";
 static bool started = false; // global data
 
 
@@ -98,6 +98,7 @@ static int transfer(char const *tx, char *rx)
 
 quit:
 	close(fd);
+//	usleep(1000);
 	return ret;
 }
 
@@ -116,7 +117,7 @@ void set_SDA(void);   // Do not drive SDA (set pin high-impedance)
 
 void clear_SDA(void); // Actively drive SDA signal low
 
-void arbitration_lost(void);
+void arbitration_lost(void){};
 
 
 
@@ -173,9 +174,24 @@ void clear_SCL(void)  {
 	char tx[4]={0x80,0,0,0};
 	char rx[4];
 	char sig = read_signals();
-	tx[1] = sig&(~SCL_I)  | sig&(~SCL_T);
+	tx[1] = sig&(~SCL_T);
 	transfer(tx, rx);
 }
+
+/**
+ * Created  09/29/2017
+ * @brief   Actively drive SCL signal low
+ * @param   
+ * @return  
+ */
+void clear_SDA(void)  {
+	char tx[4]={0x80,0,0,0};
+	char rx[4];
+	char sig = read_signals();
+	tx[1] = ( sig&(~SDA_T) );
+	transfer(tx, rx);
+}
+
 
 /**
  * Created  09/29/2017
@@ -188,7 +204,7 @@ void set_SCL(void)
 	char tx[4]={0x80,0,0,0};
 	char rx[4];
 	char sig = read_signals();
-	tx[1] = sig|(SCL_T);
+	tx[1] = ( sig|(SCL_T) );
 	transfer(tx, rx);
 }
 
@@ -235,6 +251,7 @@ void i2c_start_cond(void) {
 
   }
 
+ 
 
   if (read_SDA() == 0) {
 
@@ -434,7 +451,8 @@ bool i2c_write_byte(bool send_start,
 
 
   nack = i2c_read_bit();
-
+ if (nack==false)
+	 printf("fffffffff");
 
   if (send_stop) {
 
@@ -482,4 +500,42 @@ unsigned char i2c_read_byte(bool nack, bool send_stop) {
 void I2C_delay(void) { 
 
  usleep(10); 
+}
+
+
+/*
+ * https://www.nxp.com/docs/en/data-sheet/PCA9555.pdf
+ * a0=1;
+ * a1=0;
+ * a2=0;
+ * charn2 reg 1 0-6
+ */
+int main()
+{
+
+	char addr; 
+	addr = 0x42;
+//	set_SDA();
+//	set_SCL();
+//	usleep(100000);
+	started = true;
+//	set_SDA();
+//	set_SCL();
+
+	i2c_write_byte( true /*send_start*/, /*send_stop*/ false,addr);
+	i2c_write_byte( false /*send_start*/, /*send_stop*/ false,6);
+	i2c_write_byte( false /*send_start*/, /*send_stop*/ false,0);
+	i2c_write_byte( false /*send_start*/, /*send_stop*/ true,0);
+ 
+//	set_SDA();
+//	set_SCL();
+//	usleep(100000);	
+	started = true;	
+	i2c_write_byte( true /*send_start*/, /*send_stop*/ false,addr);
+	i2c_write_byte( false /*send_start*/, /*send_stop*/ false,2);
+	i2c_write_byte( false /*send_start*/, /*send_stop*/ false,0);
+	i2c_write_byte( false /*send_start*/, /*send_stop*/ true,10);
+
+
+
 }
